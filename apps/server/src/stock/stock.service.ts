@@ -32,6 +32,7 @@ export class StockService {
                     currentPrice: price,
                     lastUpdated: new Date().toString(),
                     movingAverage: price,
+                    beingWatched: false
                 };
 
             } catch (error) {
@@ -52,6 +53,7 @@ export class StockService {
             currentPrice: latestPrice.price,
             lastUpdated: latestPrice.timestamp,
             movingAverage,
+            beingWatched: true
         };
     }
 
@@ -72,4 +74,14 @@ export class StockService {
         this.schedulerService.addSymbol(symbol);
         return { message: `Started tracking ${symbol}` };
     }
+
+    async stopTracking(symbol: string) {
+        await this.prismaService.stockPrice.deleteMany({
+          where: { symbol },
+        });
+    
+        this.schedulerService.removeSymbol(symbol);
+    
+        return { message: `Stopped tracking ${symbol}` };
+      }
 }

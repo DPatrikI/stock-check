@@ -35,4 +35,8 @@ export class StockPriceSchedulerService {
     addSymbol(symbol: string) {
         this.symbolsToTrack.add(symbol.toUpperCase());
     }
+
+    removeSymbol(symbol: string) {
+        this.symbolsToTrack.delete(symbol.toUpperCase());
+    }
 }

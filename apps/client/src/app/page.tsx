@@ -6,7 +6,6 @@ import StockData from '@/component/StockData';
 export default function Home() {
   const [symbol, setSymbol] = useState<string>('');
   const [symbolToFetch, setSymbolToFetch] = useState<string>('');
-  const [error, setError] = useState<string>('');
 
   const handlePriceFetch = async () => {
     setSymbolToFetch(symbol);
@@ -29,7 +28,6 @@ export default function Home() {
           Get current price
         </button>
       </div>
-      {error && <div className="text-red-500 mb-4">{error}</div>}
       {symbolToFetch && (
         <StockData symbol={symbolToFetch} />
       )}
