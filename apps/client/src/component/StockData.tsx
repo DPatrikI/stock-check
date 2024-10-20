@@ -44,8 +44,10 @@ export default function StockData({ symbol }: { symbol: string }) {
 
     const handleStartTracking = async () => {
         try {
-            await axios.put(`${SERVER_URL}/stock/${symbol}`);
-            fetchStockData();
+            const response = await axios.put(`${SERVER_URL}/stock/${symbol}`);
+            if (response.status === 200) {
+                setStockInfo(prev => prev ? { ...prev, beingWatched: true } : null);
+            }
         } catch (err) {
             console.error('Error starting tracking:', err);
             setError('Failed to start tracking. Please try again.');
@@ -54,8 +56,10 @@ export default function StockData({ symbol }: { symbol: string }) {
 
     const handleStopTracking = async () => {
         try {
-            await axios.delete(`${SERVER_URL}/stock/${symbol}`);
-            fetchStockData();
+            const response = await axios.delete(`${SERVER_URL}/stock/${symbol}`);
+            if (response.status === 200) {
+                setStockInfo(prev => prev ? { ...prev, beingWatched: false } : null);
+            }
         } catch (err) {
             console.error('Error stopping tracking:', err);
             setError('Failed to stop tracking. Please try again.');

@@ -71,17 +71,31 @@ export class StockService {
     }
 
     async startTracking(symbol: string) {
-        this.schedulerService.addSymbol(symbol);
+        try {
+            const price = await this.finnhubService.getStockPrice(symbol);
+            await this.prismaService.stockPrice.create({
+                data: {
+                    symbol,
+                    price,
+                },
+            });
+
+            this.schedulerService.addSymbol(symbol);
+        } catch (error) {
+            console.log(error);
+            throw new InvalidStockSymbolException(symbol);
+        }
+
         return { message: `Started tracking ${symbol}` };
     }
 
     async stopTracking(symbol: string) {
         await this.prismaService.stockPrice.deleteMany({
-          where: { symbol },
+            where: { symbol },
         });
-    
+
         this.schedulerService.removeSymbol(symbol);
-    
+
         return { message: `Stopped tracking ${symbol}` };
-      }
+    }
 }
