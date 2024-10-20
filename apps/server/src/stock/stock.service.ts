@@ -16,7 +16,7 @@ export class StockService {
     async getStockData(symbol: string) {
         symbol = symbol.toUpperCase();
 
-        let stock = await this.prismaService.stock.findUnique({
+        let stockInDatabase = await this.prismaService.stock.findUnique({
             where: { symbol },
             include: {
                 prices: {
@@ -26,7 +26,7 @@ export class StockService {
             },
         });
 
-        if (!stock) {
+        if (!stockInDatabase) {
             try {
                 const price = await this.finnhubService.getStockPrice(symbol);
 
@@ -49,11 +49,9 @@ export class StockService {
             }
         }
 
-        const prices = stock.prices;
+        const prices = stockInDatabase.prices;
         const latestPrice = prices[0];
-
         const movingAverage = this.calculateMovingAverage(prices);
-
         const beingWatched = this.schedulerService.isSymbolBeingWatched(symbol);
 
         return {
@@ -75,7 +73,6 @@ export class StockService {
 
     async startTracking(symbol: string) {
         symbol = symbol.toUpperCase();
-
         const price = await this.finnhubService.getStockPrice(symbol);
 
         const stock = await this.prismaService.stock.create({
@@ -101,7 +98,6 @@ export class StockService {
 
     async stopTracking(symbol: string) {
         symbol = symbol.toUpperCase();
-
         this.schedulerService.removeSymbol(symbol);
 
         await this.prismaService.stock.delete({
