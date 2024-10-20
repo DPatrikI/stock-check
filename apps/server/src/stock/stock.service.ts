@@ -1,23 +1,49 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { FinnhubService } from '../finnhub/finnhub.service';
 import { StockPriceSchedulerService } from '../stock-price-scheduler/stock-price-scheduler.service';
 import { InvalidStockSymbolException } from '../exceptions/invalid-stock-symbol.exception';
+import { RateLimitExceededException } from '../exceptions/rate-limit-exceeded.exception';
 
 @Injectable()
 export class StockService {
     constructor(
         private readonly prismaService: PrismaService,
         private readonly schedulerService: StockPriceSchedulerService,
+        private readonly finnhubService: FinnhubService,
     ) { }
 
     async getStockData(symbol: string) {
-        const latestPrice = await this.prismaService.stockPrice.findFirst({
+        let latestPrice = await this.prismaService.stockPrice.findFirst({
             where: { symbol },
             orderBy: { timestamp: 'desc' },
         });
 
         if (!latestPrice) {
-            throw new InvalidStockSymbolException(symbol);
+            try {
+                const price = await this.finnhubService.getStockPrice(symbol);
+
+                if (!price) {
+                    throw new InvalidStockSymbolException(symbol);
+                }
+
+                latestPrice = await this.prismaService.stockPrice.create({
+                    data: {
+                        symbol,
+                        price,
+                    },
+                });
+
+                this.schedulerService.addSymbol(symbol);
+            } catch (error) {
+                if (error instanceof InvalidStockSymbolException) {
+                    throw error;
+                } else if (error instanceof RateLimitExceededException) {
+                    throw error;
+                } else {
+                    throw new Error(`Failed to fetch data for symbol: ${symbol}`);
+                }
+            }
         }
 
         const movingAverage = await this.calculateMovingAverage(symbol);
