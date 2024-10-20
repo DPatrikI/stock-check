@@ -12,24 +12,27 @@ export default function Home() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">Stock Price Checker</h1>
-      <div className="mb-4">
+    <div className="container mx-auto p-6 bg-gray-900 min-h-screen">
+      <h1 className="text-4xl font-bold mb-6 text-white text-center">Stock Price Checker</h1>
+      <div className="flex justify-center mb-6">
         <input
           type="text"
           value={symbol}
           onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-          className="border p-2 mr-2 text-black"
+          className="border p-3 mr-3 text-black rounded w-64"
+          placeholder="Enter stock symbol"
         />
         <button
           onClick={handlePriceFetch}
-          className="bg-blue-500 text-white p-2 rounded"
+          className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded shadow"
         >
           Get current price
         </button>
       </div>
       {symbolToFetch && (
-        <StockData symbol={symbolToFetch} />
+        <div className="flex justify-center">
+          <StockData symbol={symbolToFetch} />
+        </div>
       )}
     </div>
   );

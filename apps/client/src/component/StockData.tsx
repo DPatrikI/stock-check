@@ -63,30 +63,36 @@ export default function StockData({ symbol }: { symbol: string }) {
     };
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div className="text-center text-white">Loading...</div>;
     }
 
     if (error || !stockInfo) {
-        return <div className="text-red-500">{error || 'No data available.'}</div>;
+        return <div className="text-red-500 text-center">{error || 'No data available.'}</div>;
     }
 
     return (
-        <div className="p-4 bg-white shadow rounded text-black">
-            <h2 className="text-2xl font-bold mb-2">{stockInfo.symbol}</h2>
-            <p>Current Price: ${stockInfo.currentPrice.toFixed(2)}</p>
-            <p>Last Updated: {new Date(stockInfo.lastUpdated).toLocaleString()}</p>
-            <p>Moving Average: ${stockInfo.movingAverage.toFixed(2)}</p>
+        <div className="StockCard p-6 bg-white shadow-lg rounded-lg text-black max-w-lg">
+            <h2 className="text-3xl font-bold mb-4 text-center">{stockInfo.symbol}</h2>
+            <div className="mb-2">
+                <span className="font-semibold">Current Price:</span> ${stockInfo.currentPrice.toFixed(2)}
+            </div>
+            <div className="mb-2">
+                <span className="font-semibold">Last Updated:</span> {new Date(stockInfo.lastUpdated).toLocaleString()}
+            </div>
+            <div className="mb-4">
+                <span className="font-semibold">Moving Average:</span> ${stockInfo.movingAverage.toFixed(2)}
+            </div>
             {stockInfo.beingWatched ? (
                 <button
                     onClick={handleStopTracking}
-                    className="bg-red-500 text-white p-2 rounded mt-4"
+                    className="bg-red-500 hover:bg-red-600 text-white p-3 rounded w-full"
                 >
                     Stop Tracking
                 </button>
             ) : (
                 <button
                     onClick={handleStartTracking}
-                    className="bg-blue-500 text-white p-2 rounded mt-4"
+                    className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded w-full"
                 >
                     Start Tracking
                 </button>
