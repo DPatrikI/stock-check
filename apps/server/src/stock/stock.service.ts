@@ -30,6 +30,10 @@ export class StockService {
             try {
                 const price = await this.finnhubService.getStockPrice(symbol);
 
+                if (!price) {
+                    throw new InvalidStockSymbolException(symbol);
+                }
+
                 return {
                     symbol,
                     currentPrice: price,
@@ -74,6 +78,10 @@ export class StockService {
     async startTracking(symbol: string) {
         symbol = symbol.toUpperCase();
         const price = await this.finnhubService.getStockPrice(symbol);
+
+        if (!price) {
+            throw new InvalidStockSymbolException(symbol);
+        }
 
         const stock = await this.prismaService.stock.create({
             data: {

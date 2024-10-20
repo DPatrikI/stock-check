@@ -27,9 +27,15 @@ export default function StockData({ symbol }: { symbol: string }) {
             const response = await axios.get<StockInfo>(
                 `${SERVER_URL}/stock/${symbol}`
             );
+            console.log(response);
             setStockInfo(response.data);
         } catch (err) {
-            setError('Error fetching stock data.');
+            if (axios.isAxiosError(err) && err.response) {
+                const errorMessage = err.response.data.message || 'Error fetching stock data.';
+                setError(errorMessage);
+            } else {
+                setError('Error fetching stock data.');
+            }
         } finally {
             setLoading(false);
         }
