@@ -23,8 +23,11 @@ export class FinnhubService {
             return currentPrice;
         } catch (error) {
             console.log(error);
-            if (error.response && error.response.status === 429) {
+            if (error.response && error.status === 429) {
                 throw new RateLimitExceededException();
+            }
+            if (error.response && error.status === 400) {
+                throw new InvalidStockSymbolException(symbol);
             }
             throw new HttpException(
                 'Error fetching stock price',
