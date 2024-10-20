@@ -26,7 +26,14 @@ export class StockService {
                 if (!price) {
                     throw new InvalidStockSymbolException(symbol);
                 }
-                
+
+                return {
+                    symbol,
+                    currentPrice: price,
+                    lastUpdated: new Date().toString(),
+                    movingAverage: price,
+                };
+
             } catch (error) {
                 if (error instanceof InvalidStockSymbolException) {
                     throw error;

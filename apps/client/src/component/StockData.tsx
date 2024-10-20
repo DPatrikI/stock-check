@@ -19,6 +19,7 @@ export default function StockData({ symbol }: { symbol: string }) {
 
     useEffect(() => {
         const fetchStockData = async () => {
+            setError('');
             try {
                 setLoading(true);
                 const response = await axios.get<StockInfo>(
