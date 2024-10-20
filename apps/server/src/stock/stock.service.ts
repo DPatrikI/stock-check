@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StockPriceSchedulerService } from '../stock-price-scheduler/stock-price-scheduler.service';
+import { InvalidStockSymbolException } from '../exceptions/invalid-stock-symbol.exception';
 
 @Injectable()
 export class StockService {
@@ -16,7 +17,7 @@ export class StockService {
         });
 
         if (!latestPrice) {
-            throw new Error(`No data available for symbol: ${symbol}`);
+            throw new InvalidStockSymbolException(symbol);
         }
 
         const movingAverage = await this.calculateMovingAverage(symbol);

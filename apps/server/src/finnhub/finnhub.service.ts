@@ -1,6 +1,8 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
+import { InvalidStockSymbolException } from '../exceptions/invalid-stock-symbol.exception';
+import { RateLimitExceededException } from '../exceptions/rate-limit-exceeded.exception';
 
 @Injectable()
 export class FinnhubService {
@@ -16,11 +18,14 @@ export class FinnhubService {
             const response = await lastValueFrom(this.httpService.get(url));
             const currentPrice = response.data.c;
             if (currentPrice === null || currentPrice === undefined) {
-                throw new Error('Invalid response from Finnhub API');
+                throw new InvalidStockSymbolException(symbol);
             }
             return currentPrice;
         } catch (error) {
             console.log(error);
+            if (error.response && error.response.status === 429) {
+                throw new RateLimitExceededException();
+            }
             throw new HttpException(
                 'Error fetching stock price',
                 HttpStatus.BAD_REQUEST,
