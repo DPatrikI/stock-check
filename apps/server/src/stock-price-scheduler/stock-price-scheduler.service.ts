@@ -14,7 +14,7 @@ export class StockPriceSchedulerService {
 
     @Cron(CronExpression.EVERY_MINUTE)
     async fetchStockPrices() {
-        for (const symbol of this.symbolsToTrack) {
+        const promises = Array.from(this.symbolsToTrack).map(async (symbol) => {
             try {
                 const price = await this.finnhubService.getStockPrice(symbol);
                 await this.prismaService.stockPrice.create({
@@ -27,7 +27,9 @@ export class StockPriceSchedulerService {
             } catch (error) {
                 console.error(`Error fetching price for ${symbol}:`, error.message);
             }
-        }
+        });
+
+        await Promise.all(promises);
     }
 
     addSymbol(symbol: string) {
