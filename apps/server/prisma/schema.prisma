@@ -13,9 +13,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Stock {
+  symbol String      @id
+  prices StockPrice[]
+}
+
 model StockPrice {
-  id        Int      @id @default(autoincrement())
-  symbol    String
-  price     Float
-  timestamp DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  price       Float
+  timestamp   DateTime @default(now())
+  stock       Stock    @relation(fields: [stockSymbol], references: [symbol], onDelete: Cascade)
+  stockSymbol String
 }

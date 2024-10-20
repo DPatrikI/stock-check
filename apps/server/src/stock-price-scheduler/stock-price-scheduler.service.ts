@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class StockPriceSchedulerService {
-    private symbolsToTrack: Set<string> = new Set(['AAPL']);
+    private symbolsToTrack: Set<string> = new Set();
 
     constructor(
         private readonly finnhubService: FinnhubService,
@@ -14,22 +14,40 @@ export class StockPriceSchedulerService {
 
     @Cron(CronExpression.EVERY_MINUTE)
     async fetchStockPrices() {
-        const promises = Array.from(this.symbolsToTrack).map(async (symbol) => {
+        for (const symbol of this.symbolsToTrack) {
             try {
                 const price = await this.finnhubService.getStockPrice(symbol);
+
                 await this.prismaService.stockPrice.create({
                     data: {
-                        symbol,
                         price,
+                        stockSymbol: symbol,
                     },
                 });
+
+                const priceIdsToKeep = (
+                    await this.prismaService.stockPrice.findMany({
+                        where: { stockSymbol: symbol },
+                        select: { id: true },
+                        orderBy: { timestamp: 'desc' },
+                        take: 10,
+                    })
+                ).map((price) => price.id);
+
+                await this.prismaService.stockPrice.deleteMany({
+                    where: {
+                        stockSymbol: symbol,
+                        id: {
+                            notIn: priceIdsToKeep,
+                        },
+                    },
+                });
+
                 console.log(`Fetched and stored price for ${symbol}: $${price}`);
             } catch (error) {
                 console.error(`Error fetching price for ${symbol}:`, error.message);
             }
-        });
-
-        await Promise.all(promises);
+        }
     }
 
     addSymbol(symbol: string) {
@@ -38,5 +56,9 @@ export class StockPriceSchedulerService {
 
     removeSymbol(symbol: string) {
         this.symbolsToTrack.delete(symbol.toUpperCase());
+    }
+
+    isSymbolBeingWatched(symbol: string): boolean {
+        return this.symbolsToTrack.has(symbol.toUpperCase());
     }
 }

@@ -14,28 +14,31 @@ export class StockService {
     ) { }
 
     async getStockData(symbol: string) {
-        let latestPrice = await this.prismaService.stockPrice.findFirst({
+        symbol = symbol.toUpperCase();
+
+        let stock = await this.prismaService.stock.findUnique({
             where: { symbol },
-            orderBy: { timestamp: 'desc' },
+            include: {
+                prices: {
+                    orderBy: { timestamp: 'desc' },
+                    take: 10,
+                },
+            },
         });
 
-        if (!latestPrice) {
+        if (!stock) {
             try {
                 const price = await this.finnhubService.getStockPrice(symbol);
-
-                if (!price) {
-                    throw new InvalidStockSymbolException(symbol);
-                }
 
                 return {
                     symbol,
                     currentPrice: price,
-                    lastUpdated: new Date().toString(),
+                    lastUpdated: new Date().toISOString(),
                     movingAverage: price,
-                    beingWatched: false
+                    beingWatched: false,
                 };
-
             } catch (error) {
+                console.log(error);
                 if (error instanceof InvalidStockSymbolException) {
                     throw error;
                 } else if (error instanceof RateLimitExceededException) {
@@ -46,55 +49,64 @@ export class StockService {
             }
         }
 
-        const movingAverage = await this.calculateMovingAverage(symbol);
+        const prices = stock.prices;
+        const latestPrice = prices[0];
+
+        const movingAverage = this.calculateMovingAverage(prices);
+
+        const beingWatched = this.schedulerService.isSymbolBeingWatched(symbol);
 
         return {
             symbol,
             currentPrice: latestPrice.price,
             lastUpdated: latestPrice.timestamp,
             movingAverage,
-            beingWatched: true
+            beingWatched,
         };
     }
 
-    async calculateMovingAverage(symbol: string): Promise<number> {
-        const prices = await this.prismaService.stockPrice.findMany({
-            where: { symbol },
-            orderBy: { timestamp: 'desc' },
-            take: 10,
-        });
+    calculateMovingAverage(prices: { price: number }[]): number {
         if (prices.length === 0) {
             return 0;
         }
-        const sum = prices.reduce((accumulator, current) => accumulator + current.price, 0);
+        const sum = prices.reduce((acc, curr) => acc + curr.price, 0);
         return sum / prices.length;
     }
 
     async startTracking(symbol: string) {
-        try {
-            const price = await this.finnhubService.getStockPrice(symbol);
-            await this.prismaService.stockPrice.create({
-                data: {
-                    symbol,
-                    price,
+        symbol = symbol.toUpperCase();
+
+        const price = await this.finnhubService.getStockPrice(symbol);
+
+        const stock = await this.prismaService.stock.create({
+            data: {
+                symbol,
+                prices: {
+                    create: {
+                        price,
+                    },
                 },
-            });
+            },
+            include: {
+                prices: {
+                    orderBy: { timestamp: 'desc' },
+                    take: 10,
+                },
+            },
+        });
 
-            this.schedulerService.addSymbol(symbol);
-        } catch (error) {
-            console.log(error);
-            throw new InvalidStockSymbolException(symbol);
-        }
-
+        this.schedulerService.addSymbol(symbol);
         return { message: `Started tracking ${symbol}` };
     }
 
     async stopTracking(symbol: string) {
-        await this.prismaService.stockPrice.deleteMany({
-            where: { symbol },
-        });
+        symbol = symbol.toUpperCase();
 
         this.schedulerService.removeSymbol(symbol);
+
+        await this.prismaService.stock.delete({
+            where: { symbol },
+        });
 
         return { message: `Stopped tracking ${symbol}` };
     }
