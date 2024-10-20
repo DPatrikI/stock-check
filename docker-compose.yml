@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: ./apps/server/Dockerfile
+    image: stock-backend
+    container_name: stock-backend
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/stock
+      FINNHUB_API_KEY: ${FINNHUB_API_KEY}
+      PORT: 3000
+    ports:
+      - '3000:3000'
+    command: sh -c "pnpm prisma:migrate && node dist/main"
+
+  client:
+    build:
+      context: .
+      dockerfile: ./apps/client/Dockerfile
+    image: stock-frontend
+    container_name: stock-frontend
+    restart: unless-stopped
+    depends_on:
+      - server
+    environment:
+      SERVER_URL: http://localhost:3001
+    ports:
+      - '3001:3001'
+
+  db:
+    image: postgres:14-alpine
+    container_name: stock-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: stock
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
