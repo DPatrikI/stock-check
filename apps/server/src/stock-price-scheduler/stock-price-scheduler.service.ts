@@ -12,6 +12,17 @@ export class StockPriceSchedulerService {
         private readonly prismaService: PrismaService,
     ) { }
 
+    async onModuleInit() {
+        const stocks = await this.prismaService.stock.findMany({
+            select: { symbol: true },
+        });
+        stocks.forEach((stock) => {
+            this.symbolsToTrack.add(stock.symbol.toUpperCase());
+        });
+        console.log('Scheduler initialized with symbols:', Array.from(this.symbolsToTrack));
+    }
+
+
     @Cron(CronExpression.EVERY_MINUTE)
     async fetchStockPrices() {
         for (const symbol of this.symbolsToTrack) {
