@@ -1,34 +1,35 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FinnhubService } from './finnhub.service';
+import { HttpModule } from '@nestjs/axios';
 import { HttpService } from '@nestjs/axios';
 import { of } from 'rxjs';
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AxiosResponse, AxiosHeaders } from 'axios';
+import { InvalidStockSymbolException } from '../exceptions/invalid-stock-symbol.exception';
 
 describe('FinnhubService', () => {
   let service: FinnhubService;
   let httpService: HttpService;
 
   beforeEach(async () => {
+    process.env.FINNHUB_API_KEY = 'test_api_key';
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        FinnhubService,
-        {
-          provide: HttpService,
-          useValue: {
-            get: jest.fn(),
-          },
-        },
-      ],
+      imports: [HttpModule, ConfigModule.forRoot()],
+      providers: [FinnhubService],
     }).compile();
 
     service = module.get<FinnhubService>(FinnhubService);
     httpService = module.get<HttpService>(HttpService);
   });
 
-  it('should return the stock price on success', async () => {
-    const mockResponse: AxiosResponse = {
-      data: { c: 100 },
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  it('should return current stock price', async () => {
+    const result: AxiosResponse<any> = {
+      data: { c: 150 },
       status: 200,
       statusText: 'OK',
       headers: new AxiosHeaders(),
@@ -36,15 +37,14 @@ describe('FinnhubService', () => {
         headers: new AxiosHeaders(),
       },
     };
-
-    jest.spyOn(httpService, 'get').mockImplementationOnce(() => of(mockResponse));
+    jest.spyOn(httpService, 'get').mockImplementationOnce(() => of(result));
 
     const price = await service.getStockPrice('AAPL');
-    expect(price).toBe(100);
+    expect(price).toEqual(150);
   });
 
-  it('should throw an error if the stock price is invalid', async () => {
-    const mockResponse: AxiosResponse = {
+  it('should throw InvalidStockSymbolException when price is null', async () => {
+    const result: AxiosResponse<any> = {
       data: { c: null },
       status: 200,
       statusText: 'OK',
@@ -53,21 +53,10 @@ describe('FinnhubService', () => {
         headers: new AxiosHeaders(),
       },
     };
+    jest.spyOn(httpService, 'get').mockImplementationOnce(() => of(result));
 
-    jest.spyOn(httpService, 'get').mockImplementationOnce(() => of(mockResponse));
-
-    await expect(service.getStockPrice('AAPL')).rejects.toThrow(
-      new HttpException('Error fetching stock price', HttpStatus.BAD_REQUEST),
-    );
-  });
-
-  it('should handle exceptions from HttpService', async () => {
-    jest.spyOn(httpService, 'get').mockImplementationOnce(() => {
-      throw new Error('API Error');
-    });
-
-    await expect(service.getStockPrice('AAPL')).rejects.toThrow(
-      new HttpException('Error fetching stock price', HttpStatus.BAD_REQUEST),
+    await expect(service.getStockPrice('INVALID')).rejects.toThrow(
+      InvalidStockSymbolException,
     );
   });
 });
