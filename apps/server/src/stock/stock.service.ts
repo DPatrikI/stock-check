@@ -26,15 +26,7 @@ export class StockService {
                 if (!price) {
                     throw new InvalidStockSymbolException(symbol);
                 }
-
-                latestPrice = await this.prismaService.stockPrice.create({
-                    data: {
-                        symbol,
-                        price,
-                    },
-                });
-
-                this.schedulerService.addSymbol(symbol);
+                
             } catch (error) {
                 if (error instanceof InvalidStockSymbolException) {
                     throw error;
