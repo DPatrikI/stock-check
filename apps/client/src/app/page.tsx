@@ -13,7 +13,9 @@ export default function Home() {
 
   return (
     <div className="container mx-auto p-6 bg-gray-900 min-h-screen">
-      <h1 className="text-4xl font-bold mb-6 text-white text-center">Stock Price Checker</h1>
+      <h1 className="text-4xl font-bold mb-6 text-white text-center">
+        Stock Price Checker
+      </h1>
       <div className="flex justify-center mb-6">
         <input
           type="text"

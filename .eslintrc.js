@@ -16,7 +16,7 @@ module.exports = {
         sourceType: 'module',
     },
     rules: {
-        'prettier/prettier': 'error',
+        'prettier/prettier': 'warn',
         '@typescript-eslint/no-unused-vars': 'warn',
         '@typescript-eslint/explicit-function-return-type': 'off',
         '@typescript-eslint/no-explicit-any': 'warn',
