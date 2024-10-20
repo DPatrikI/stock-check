@@ -1,24 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import axios from 'axios';
+import StockData from '@/component/StockData';
 
 export default function Home() {
   const [symbol, setSymbol] = useState<string>('AAPL');
-  const [price, setPrice] = useState<number>(0);
+  const [symbolToFetch, setSymbolToFetch] = useState<string>('AAPL');
   const [error, setError] = useState<string>('');
 
-  const getPrice = async () => {
-    try {
-      const result = await axios.get(
-        `${process.env.SERVER_URL}/stock/${symbol}`
-      );
-      setPrice(result.data.currentPrice);
-      setError('');
-    } catch (error) {
-      console.error('Error getting price:', error);
-      setError('Failed to get price. Please try again.');
-    }
+  const handlePriceFetch = async () => {
+    setSymbolToFetch(symbol);
   };
 
   return (
@@ -32,18 +23,14 @@ export default function Home() {
           className="border p-2 mr-2 text-black"
         />
         <button
-          onClick={getPrice}
+          onClick={handlePriceFetch}
           className="bg-blue-500 text-white p-2 rounded"
         >
           Get current price
         </button>
       </div>
       {error && <div className="text-red-500 mb-4">{error}</div>}
-      {price > 0 && (
-        <>
-          <p>symbol: {symbol} price: {price}</p>
-        </>
-      )}
+      <StockData symbol={symbolToFetch} />
     </div>
   );
 }
