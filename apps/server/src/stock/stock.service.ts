@@ -14,7 +14,7 @@ export class StockService {
     ) { }
 
     async getStockData(symbol: string) {
-        symbol = symbol.toUpperCase();
+        symbol = symbol.toUpperCase().trim();
 
         let stockInDatabase = await this.prismaService.stock.findUnique({
             where: { symbol },
@@ -76,7 +76,7 @@ export class StockService {
     }
 
     async startTracking(symbol: string) {
-        symbol = symbol.toUpperCase();
+        symbol = symbol.toUpperCase().trim();
         const price = await this.finnhubService.getStockPrice(symbol);
 
         if (!price) {
@@ -105,7 +105,7 @@ export class StockService {
     }
 
     async stopTracking(symbol: string) {
-        symbol = symbol.toUpperCase();
+        symbol = symbol.toUpperCase().trim();
         this.schedulerService.removeSymbol(symbol);
 
         await this.prismaService.stock.delete({

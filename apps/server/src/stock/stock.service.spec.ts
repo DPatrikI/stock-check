@@ -50,6 +50,17 @@ describe('StockService', () => {
     schedulerService = module.get<StockPriceSchedulerService>(StockPriceSchedulerService);
   });
 
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  it('should throw validation error for invalid symbol', async () => {
+    const invalidSymbol = 'INVALID@!';
+    await expect(service.getStockData(invalidSymbol)).rejects.toThrow(
+      InvalidStockSymbolException,
+    );
+  });
+
   describe('calculateMovingAverage', () => {
     it('should calculate the moving average of given prices', () => {
       const prices = [
